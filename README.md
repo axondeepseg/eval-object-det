@@ -1,14 +1,13 @@
+```                                               
+                 _         _     _       _      _   
+  _____   ____ _| |   ___ | |__ (_)   __| | ___| |_ 
+ / _ \ \ / / _` | |  / _ \| '_ \| |  / _` |/ _ \ __|
+|  __/\ V / (_| | | | (_) | |_) | | | (_| |  __/ |_ 
+ \___| \_/ \__,_|_|  \___/|_.__// |  \__,_|\___|\__|
+                              |__/                                  
 ```
-                        ___                    __                          __                __          __      
-                       /\_ \                  /\ \       __               /\ \__            /\ \        /\ \__   
-   __   __  __     __  \//\ \              ___\ \ \____ /\_\     __    ___\ \ ,_\           \_\ \     __\ \ ,_\  
- /'__`\/\ \/\ \  /'__`\  \ \ \   _______  / __`\ \ '__`\\/\ \  /'__`\ /'___\ \ \/  _______  /'_` \  /'__`\ \ \/  
-/\  __/\ \ \_/ |/\ \L\.\_ \_\ \_/\______\/\ \L\ \ \ \L\ \\ \ \/\  __//\ \__/\ \ \_/\______\/\ \L\ \/\  __/\ \ \_ 
-\ \____\\ \___/ \ \__/.\_\/\____\/______/\ \____/\ \_,__/_\ \ \ \____\ \____\\ \__\/______/\ \___,_\ \____\\ \__\
- \/____/ \/__/   \/__/\/_/\/____/         \/___/  \/___//\ \_\ \/____/\/____/ \/__/         \/__,_ /\/____/ \/__/
-                                                        \ \____/                                                 
-                                                         \/___/                                                  
-```
+
+![schematics](postprocessing_before_obj_detection_eval.png)
 
 ## Setup the environment
 You know the drill: setup a venv to isolate your environment (using `conda`, `pyenv`, ...). For example:
@@ -18,4 +17,6 @@ conda create python==3.12.9 -n eval-obj-det
 conda activate eval-obj-det
 conda env update --file environment.yaml
 ```
+
+This should install AxonDeepSeg so we can use its utilities to postprocess the semantic segmentations.
 

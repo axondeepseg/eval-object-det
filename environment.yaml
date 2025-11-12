@@ -1,0 +1,6 @@
+name: eval-obj-det
+channels:
+  - defaults
+dependencies:
+  - pip:
+      - axondeepseg==5.3.0

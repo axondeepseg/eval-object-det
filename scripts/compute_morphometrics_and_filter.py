@@ -47,25 +47,36 @@ def main():
     #     compute morphometrics (myelinated axons)      #
     # ------------------------------------------------- #
     argv = [
-        '-i', str(seg_dir), 
-        '-s', PX_SIZE,
+        '-i', str(seg_dir),
+        '-s', str(PX_SIZE),
         '-c', 
     ]
-    # launch_morphometrics_computation.main(argv)
+    try:
+        print('Computing morphometrics for MYELINATED axons.')
+        launch_morphometrics_computation.main(argv)
+    except SystemExit as e:
+        if e.code != 0:
+            print('ERROR during morphometric computation for myelinated axons')
 
     # ------------------------------------------------- #
     #     compute morphometrics (unmyelinated axons)    #
     # ------------------------------------------------- #
     argv = [
         '-i', str(seg_dir),
-        '-s', PX_SIZE,
+        '-s', str(PX_SIZE),
         '-u',
     ]
+    try:
+        print('Computing morphometrics for UNMYELINATED axons.')
+        launch_morphometrics_computation.main(argv)
+    except SystemExit as e:
+        if e.code != 0:
+            print('ERROR during morphometric computation for unmyelinated axons')
 
     # ------------------------------------------------- #
     #               filter morphometrics                #
     # ------------------------------------------------- #
-    pass
+
 
     # ------------------------------------------------- #
     #               filter instance seg                 #

@@ -1,13 +1,9 @@
-```                                               
-                 _         _     _           _         _      _   
-  _____   ____ _| |   ___ | |__ (_) ___  ___| |_    __| | ___| |_ 
- / _ \ \ / / _` | |  / _ \| '_ \| |/ _ \/ __| __|  / _` |/ _ \ __|
-|  __/\ V / (_| | | | (_) | |_) | |  __/ (__| |_  | (_| |  __/ |_ 
- \___| \_/ \__,_|_|  \___/|_.__// |\___|\___|\__|  \__,_|\___|\__|
-                              |__/                                                              
-```
+# eval-object-det
 
+Phase 1: Postprocess the semantic segmentations to obtain filtered instance segmentations
 ![schematics](postprocessing_before_obj_detection_eval.png)
+
+Phase 2: Evaluate instance seg against manual count for every image
 
 ## Setup the environment
 You know the drill: setup a venv to isolate your environment (using `conda`, `pyenv`, ...). For example:

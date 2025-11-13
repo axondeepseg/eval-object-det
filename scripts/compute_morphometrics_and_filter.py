@@ -19,6 +19,7 @@ def main():
     parser = argparse.ArgumentParser(description="Compute morphometrics from semantic segmentations and filter them based on size.")
     parser.add_argument('--seg_dir', type=str, required=True, help='Path to the folder containing semantic segmentations.')
     parser.add_argument('--counts_dir', type=str, required=True, help='Path to the folder containing manual counts in XML format.')
+    #TODO: add support for Brad's CSV format
     parser.add_argument('--subj_list', type=str, required=True, help='Path to the subj_list.txt file.')
     parser.add_argument('--output_dir', type=str, required=True, help='Path to the output folder where results will be saved.')
     
@@ -38,14 +39,21 @@ def main():
     # ---------------------------------------------
     # compute morphometrics (myelinated axons)
     # ---------------------------------------------
-    args = [
-        ''
+    argv = [
+        '-i', str(seg_dir), 
+        '-s', PX_SIZE,
+        '-c', 
     ]
         
 
     # ---------------------------------------------
     # compute morphometrics (unmyelinated axons)
     # ---------------------------------------------
+    argv = [
+        '-i', str(seg_dir),
+        '-s', PX_SIZE,
+        '-u',
+    ]
 
 
 

@@ -9,6 +9,7 @@ Author: Armand Collin
 
 from pathlib import Path
 from AxonDeepSeg.morphometrics import launch_morphometrics_computation
+from AxonDeepSeg.visualization.merge_masks import merge_masks
 import argparse
 
 # this pixel resolution is specific to the project with APP-cKO mice
@@ -34,28 +35,43 @@ def main():
     with open(subj_list_path, 'r') as f:
         subjects = [line.strip() for line in f.readlines()]
     
-    #TODO: if no axonmyelin mask is found, create them
+    # if no axonmyelin mask is found, create them
+    has_axonmyelin_masks = len(list(seg_dir.glob('*_seg-axonmyelin*'))) > 0
+    if not has_axonmyelin_masks:
+        print('I did not find any combined axonmyelin mask. Creating them for you.') 
+        for axon_mask_path in seg_dir.glob('*_seg-axon.png'):
+            myelin_mask_path = str(axon_mask_path).replace('-axon', '-myelin')
+            merge_masks(axon_mask_path, myelin_mask_path)
 
-    # ---------------------------------------------
-    # compute morphometrics (myelinated axons)
-    # ---------------------------------------------
+    # ------------------------------------------------- #
+    #     compute morphometrics (myelinated axons)      #
+    # ------------------------------------------------- #
     argv = [
         '-i', str(seg_dir), 
         '-s', PX_SIZE,
         '-c', 
     ]
-        
+    # launch_morphometrics_computation.main(argv)
 
-    # ---------------------------------------------
-    # compute morphometrics (unmyelinated axons)
-    # ---------------------------------------------
+    # ------------------------------------------------- #
+    #     compute morphometrics (unmyelinated axons)    #
+    # ------------------------------------------------- #
     argv = [
         '-i', str(seg_dir),
         '-s', PX_SIZE,
         '-u',
     ]
 
+    # ------------------------------------------------- #
+    #               filter morphometrics                #
+    # ------------------------------------------------- #
+    pass
 
+    # ------------------------------------------------- #
+    #               filter instance seg                 #
+    # ------------------------------------------------- #
+    pass
+ 
 
 if __name__ == "__main__":
     main()

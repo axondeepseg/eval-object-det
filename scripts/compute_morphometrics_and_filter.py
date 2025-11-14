@@ -11,10 +11,78 @@ from pathlib import Path
 from AxonDeepSeg.morphometrics import launch_morphometrics_computation
 from AxonDeepSeg.visualization.merge_masks import merge_masks
 import argparse
+import pandas as pd
 
 # this pixel resolution is specific to the project with APP-cKO mice
 PX_SIZE = 0.005648  # in microns (5.648 nm)
 
+
+def load_myelinated_morpho(fname, verbose=False):
+    df = pd.read_excel(fname)
+    n_filtered = 0
+    print(df.head)
+
+    #TODO: eventually we will want to make these ad hoc rules customizable 
+    # exclude axons with diam < 0.1
+    outliers = df[df['axon_diam (um)'] < 0.1]
+    if verbose:
+        print(f'removing {len(outliers)} lines with axon_diam < 0.1 um')
+    n_filtered += len(outliers)
+    df = df.drop(outliers.index)
+
+    # check for NaNs
+    outliers = df[df['gratio'].isna()]
+    if verbose:
+        print(f'removing {len(outliers)} lines with NaN gratio')
+    n_filtered += len(outliers)
+    df = df.drop(outliers.index)
+
+    # check invalid g ratios
+    outliers = df[df['gratio'] >= 1]
+    if verbose:
+        print(f'removing {len(outliers)} lines with gratio >= 1')
+    n_filtered += len(outliers)
+    df = df.drop(outliers.index)
+    outliers = df[df['gratio'] <= 0]
+    if verbose:
+        print(f'removing {len(outliers)} lines with gratio <= 0')
+    n_filtered += len(outliers)
+    df = df.drop(outliers.index)
+
+    if verbose:
+        print(f'Removed a total of {n_filtered} myelinated axons according to post hoc screening rules.')
+
+    return df, n_filtered
+
+def load_unmyelinated_morpho(fname, verbose=False):
+    df = pd.read_excel(fname)
+    n_filtered = 0
+
+    # threshold for diameter is 0.05 um
+    outliers = df[df['axon_diam (um)'] < 0.05]
+    if verbose:
+        print(f'removing {len(outliers)} lines with axon_diam < 0.05 um')
+    n_filtered += len(outliers)
+    df = df.drop(outliers.index)
+
+    # check for minimal solidity - under 0.8, the shape is extremely concave
+    outliers = df[df['solidity'] < 0.8]
+    if verbose:
+        print(f'removing {len(outliers)} lines with solidity < 0.8')
+    n_filtered += len(outliers)
+    df = df.drop(outliers.index)
+
+    # limit max axon area
+    outliers = df[df['axon_area (um^2)'] > 1]
+    if verbose:
+        print(f'Removing {len(outliers)} lines with axon_area > 1 um^2')
+    n_filtered += len(outliers)
+    df = df.drop(outliers.index)
+
+    if verbose:
+        print(f'Removed a total of {n_filtered} unmyelinated axons according to post hoc screening rules.')
+
+    return df, n_filtered
 
 def main():
     parser = argparse.ArgumentParser(description="Compute morphometrics from semantic segmentations and filter them based on size.")
@@ -34,6 +102,7 @@ def main():
     
     with open(subj_list_path, 'r') as f:
         subjects = [line.strip() for line in f.readlines()]
+    nb_subjects = list(seg_dir.glob('*_seg-myelin*'))
     
     # if no axonmyelin mask is found, create them
     has_axonmyelin_masks = len(list(seg_dir.glob('*_seg-axonmyelin*'))) > 0
@@ -76,6 +145,25 @@ def main():
     # ------------------------------------------------- #
     #               filter morphometrics                #
     # ------------------------------------------------- #
+    m_morpho_paths = seg_dir.glob('*_axon_morphometrics.xlsx')
+    u_morpho_paths = seg_dir.glob('*_uaxon_morphometrics.xlsx')
+
+    lines_removed = {}
+    for m_morpho_p, u_morpho_p in zip(m_morpho_paths, u_morpho_paths):
+        m_df, m_nb_filtered = load_myelinated_morpho(str(m_morpho_p))
+        m_new_fname = m_morpho_p.name.replace('.xlsx', '_filtered.xlsx')
+        m_df.to_excel(output_dir / m_new_fname)
+
+        u_df, u_nb_filtered = load_unmyelinated_morpho(str(u_morpho_p))
+        u_new_fname = u_morpho_p.name.replace('.xlsx', '_filtered.xlsx')
+        u_df.to_excel(output_dir / u_new_fname)
+
+        # logging the nb of filtered lines to monitor improvement
+        base_name = str(m_morpho_p).replace('_axon_morphometrics.xlsx', '')
+        lines_removed[base_name] = {
+            'm_lines_removed': m_nb_filtered,
+            'u_lines_removed': u_nb_filtered
+        }
 
 
     # ------------------------------------------------- #

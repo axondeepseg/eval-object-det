@@ -12,6 +12,7 @@ from AxonDeepSeg.morphometrics import launch_morphometrics_computation
 from AxonDeepSeg.visualization.merge_masks import merge_masks
 import argparse
 import pandas as pd
+import json
 
 # this pixel resolution is specific to the project with APP-cKO mice
 PX_SIZE = 0.005648  # in microns (5.648 nm)
@@ -171,7 +172,9 @@ def main():
             'm_lines_removed': m_nb_filtered,
             'u_lines_removed': u_nb_filtered
         }
-
+    log_fname = output_dir / 'lines_removed.json'
+    with open(str(log_fname), 'w') as logfile:
+        json.dump(lines_removed, logfile, indent=4)
 
     # ------------------------------------------------- #
     #               filter instance seg                 #

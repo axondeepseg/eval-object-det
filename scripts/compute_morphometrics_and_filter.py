@@ -20,7 +20,6 @@ PX_SIZE = 0.005648  # in microns (5.648 nm)
 def load_myelinated_morpho(fname, verbose=False):
     df = pd.read_excel(fname)
     n_filtered = 0
-    print(df.head)
 
     #TODO: eventually we will want to make these ad hoc rules customizable 
     # exclude axons with diam < 0.1
@@ -102,7 +101,7 @@ def main():
     
     with open(subj_list_path, 'r') as f:
         subjects = [line.strip() for line in f.readlines()]
-    nb_subjects = list(seg_dir.glob('*_seg-myelin*'))
+    nb_subjects = len(list(seg_dir.glob('*_seg-myelin*')))
     
     # if no axonmyelin mask is found, create them
     has_axonmyelin_masks = len(list(seg_dir.glob('*_seg-axonmyelin*'))) > 0
@@ -115,32 +114,40 @@ def main():
     # ------------------------------------------------- #
     #     compute morphometrics (myelinated axons)      #
     # ------------------------------------------------- #
-    argv = [
-        '-i', str(seg_dir),
-        '-s', str(PX_SIZE),
-        '-c', 
-    ]
-    try:
-        print('Computing morphometrics for MYELINATED axons.')
-        launch_morphometrics_computation.main(argv)
-    except SystemExit as e:
-        if e.code != 0:
-            print('ERROR during morphometric computation for myelinated axons')
+    nb_morpho_files = len(list(seg_dir.glob('*_axon_morphometrics.xlsx')))
+    if nb_morpho_files == nb_subjects:
+        print('Found as many morphometric files as nb of subjects. Skipping (myelinated) morphometric computation step.')
+    else:
+        argv = [
+            '-i', str(seg_dir),
+            '-s', str(PX_SIZE),
+            '-c', 
+        ]
+        try:
+            print('Computing morphometrics for MYELINATED axons.')
+            launch_morphometrics_computation.main(argv)
+        except SystemExit as e:
+            if e.code != 0:
+                print('ERROR during morphometric computation for myelinated axons')
 
     # ------------------------------------------------- #
     #     compute morphometrics (unmyelinated axons)    #
     # ------------------------------------------------- #
-    argv = [
-        '-i', str(seg_dir),
-        '-s', str(PX_SIZE),
-        '-u',
-    ]
-    try:
-        print('Computing morphometrics for UNMYELINATED axons.')
-        launch_morphometrics_computation.main(argv)
-    except SystemExit as e:
-        if e.code != 0:
-            print('ERROR during morphometric computation for unmyelinated axons')
+    nb_umorpho_files = len(list(seg_dir.glob('*_uaxon_morphometrics.xlsx')))
+    if nb_umorpho_files == nb_subjects:
+        print('Found as many morphometric files as nb of subjects. Skipping (unmyelinated) morphometric computation step.')
+    else:
+        argv = [
+            '-i', str(seg_dir),
+            '-s', str(PX_SIZE),
+            '-u',
+        ]
+        try:
+            print('Computing morphometrics for UNMYELINATED axons.')
+            launch_morphometrics_computation.main(argv)
+        except SystemExit as e:
+            if e.code != 0:
+                print('ERROR during morphometric computation for unmyelinated axons')
 
     # ------------------------------------------------- #
     #               filter morphometrics                #

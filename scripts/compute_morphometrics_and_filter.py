@@ -7,16 +7,32 @@ This script takes as input 3 things:
 Author: Armand Collin
 '''
 
-from pathlib import Path
 from AxonDeepSeg.morphometrics import launch_morphometrics_computation
 from AxonDeepSeg.visualization.merge_masks import merge_masks
+from AxonDeepSeg import ads_utils
+
+from pathlib import Path
+from skimage import measure
 import argparse
 import pandas as pd
+import numpy as np
 import json
 
 # this pixel resolution is specific to the project with APP-cKO mice
 PX_SIZE = 0.005648  # in microns (5.648 nm)
 
+
+def filter_instance_segmentation(inst_seg, valid_ids):
+    valid_ids_mapped = { x+1 for x in valid_ids }
+    inst_seg_ids = set(np.unique(inst_seg))
+    # value 0 is the background, which we leave untouched
+    inst_seg_ids.remove(0)
+    ids_to_remove = inst_seg_ids - valid_ids_mapped
+    
+    for id in ids_to_remove:
+        inst_seg[inst_seg == id] = 0
+
+    return inst_seg
 
 def load_myelinated_morpho(fname, verbose=False):
     df = pd.read_excel(fname)
@@ -152,19 +168,38 @@ def main():
 
     # ------------------------------------------------- #
     #               filter morphometrics                #
+    #            and instance segmentations             #
     # ------------------------------------------------- #
     m_morpho_paths = seg_dir.glob('*_axon_morphometrics.xlsx')
     u_morpho_paths = seg_dir.glob('*_uaxon_morphometrics.xlsx')
 
     lines_removed = {}
     for m_morpho_p, u_morpho_p in zip(m_morpho_paths, u_morpho_paths):
-        m_df, m_nb_filtered = load_myelinated_morpho(str(m_morpho_p))
+        # screening for myelinated axons
+        m_df, m_nb_filtered = load_myelinated_morpho(str(m_morpho_p), verbose=True)
         m_new_fname = m_morpho_p.name.replace('.xlsx', '_filtered.xlsx')
         m_df.to_excel(output_dir / m_new_fname)
+        # filter instance segmentation
+        m_valid_ids = m_df.iloc[:, 0].tolist()
+        m_inst_seg_path = str(m_morpho_p).replace('_axon_morphometrics.xlsx', '_instance-map.png')
+        m_inst_seg = ads_utils.imread(m_inst_seg_path, use_16bit=True)
+        m_inst_seg_filtered = filter_instance_segmentation(m_inst_seg, m_valid_ids)
+        m_inst_seg_filtered_fname = output_dir / Path(m_inst_seg_path).name.replace('.png', '_filtered.png')
+        ads_utils.imwrite(m_inst_seg_filtered_fname, m_inst_seg_filtered, use_16bit=True)
 
-        u_df, u_nb_filtered = load_unmyelinated_morpho(str(u_morpho_p))
+        # screening for unmyelinated axons
+        u_df, u_nb_filtered = load_unmyelinated_morpho(str(u_morpho_p), verbose=True)
         u_new_fname = u_morpho_p.name.replace('.xlsx', '_filtered.xlsx')
         u_df.to_excel(output_dir / u_new_fname)
+        # filter instance segmentation
+        u_valid_ids = u_df.iloc[:, 0].tolist()
+        u_seg_path = str(u_morpho_p).replace('_uaxon_morphometrics.xlsx', '_seg-uaxon.png')
+        u_seg = ads_utils.imread(u_seg_path, use_16bit=True)
+        u_inst_seg = measure.label(u_seg, connectivity=1).astype(np.uint16)
+
+        u_inst_seg_filtered = filter_instance_segmentation(u_inst_seg, u_valid_ids)
+        u_inst_seg_filtered_fname = output_dir / Path(u_seg_path).name.replace('.png', '_filtered.png')
+        ads_utils.imwrite(u_inst_seg_filtered_fname, u_inst_seg_filtered, use_16bit=True)
 
         # logging the nb of filtered lines to monitor improvement
         base_name = str(m_morpho_p).replace('_axon_morphometrics.xlsx', '')
@@ -175,11 +210,6 @@ def main():
     log_fname = output_dir / 'lines_removed.json'
     with open(str(log_fname), 'w') as logfile:
         json.dump(lines_removed, logfile, indent=4)
-
-    # ------------------------------------------------- #
-    #               filter instance seg                 #
-    # ------------------------------------------------- #
-    pass
  
 
 if __name__ == "__main__":

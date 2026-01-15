@@ -1,7 +1,7 @@
 '''
 This script takes as input 3 things:
 - a folder with semantic segmentations (output of a segmentation network)
-- a folder with manual counts (in XML format)
+- a folder with manual counts (in XML format, output of CellCounter from ImageJ)
 - a 'subj_list.txt' file listing the subjects to process
 
 Author: Armand Collin
